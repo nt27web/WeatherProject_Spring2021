@@ -1,69 +1,62 @@
-# from yahoo_weather.weather import YahooWeather
-# from yahoo_weather.config.units import Unit
-#
-#
-# data = YahooWeather(APP_ID="K6vcJ8sq",
-#                         api_key="dj0yJmk9eWZrS2F2UXNFckNzJmQ9WVdrOVN6WjJZMG80YzNFbWNHbzlNQT09JnM9Y29uc3VtZXJzZWNyZXQmc3Y9MCZ4PWVk",
-#                         api_secret="9b3509311f3e75f55050fb3f3a3a223a4d235e99")
-#
-#
-# def get_weather(city):
-#     data.get_yahoo_weather_by_city(city, Unit.celsius)
-#     print(data.condition.text)
-#     print(data.condition.temperature)
-#     for fore in data.forecasts:
-#         print(fore.date)
-#         print(fore.low)
-#         print(fore.high)
+import datetime
 import http
 import json
 import pandas as pd
-import requests
+import matplotlib.pyplot as plt
 
 
-def get_weather():
-    # conn = http.client.HTTPSConnection("aerisweather1.p.rapidapi.com")
-    #
-    # headers = {
-    #     'x-rapidapi-key': "aa9ab8c454msh05a5f4ee87de0c3p18d923jsn59ae419e8e70",
-    #     'x-rapidapi-host': "aerisweather1.p.rapidapi.com"
-    # }
-    #
-    # conn.request("GET", "/forecasts/07307?from=2020-01-01&to=2020-12-31", headers=headers)
-    #
-    # res = conn.getresponse()
-    # data = res.read()
-    #
-    # json_object = json.loads(data.decode("utf-8"))
-    # json_formatted_str = json.dumps(json_object, indent=2)
-    # print(json_formatted_str)
-    # print(len(json_object))
-    # for item in json_object:
-    #     print(item.sunrise)
-    #     print(item.sunset)
+def recommendGolfer():
+    # Get data from external API
+    json_object = getData()
+    # print raw data
+    json_formatted_str = json.dumps(json_object, indent=2)
+    print(json_formatted_str)
+    # select the columns required for the analysis
+    df = pd.DataFrame.from_records(json_object['data']
+        , columns=['valid_date', 'wind_gust_spd', 'wind_spd', 'precip', 'uv', 'vis'])
+    # add a column to derive the recomendation based on the rule set in conditions method
+    df['recommended'] = df.apply(conditions, axis=1)
+    # plot wind gusts graph
+    df.plot(x="valid_date", y=["wind_gust_spd"])
+    plt.show()
+    # plot wind speed graph
+    df.plot(x="valid_date", y=["wind_spd"])
+    plt.show()
+    # plot uv index graph
+    df.plot(x="valid_date", y=["uv"])
+    plt.show()
+    # plot visibility graph
+    df.plot(x="valid_date", y=["vis"])
+    plt.show()
+    # plot precipitation graph
+    df.plot(x="valid_date", y=["precip"])
+    plt.show()
+    # plot recommendation graph
+    plt.plot('valid_date', 'recommended', data=df, linestyle='none', marker='o')
+    plt.show()
 
+
+def getData():
     conn = http.client.HTTPSConnection("weatherbit-v1-mashape.p.rapidapi.com")
-
     headers = {
         'x-rapidapi-key': "aa9ab8c454msh05a5f4ee87de0c3p18d923jsn59ae419e8e70",
         'x-rapidapi-host': "weatherbit-v1-mashape.p.rapidapi.com"
     }
-
     conn.request("GET", "/forecast/daily?lat=38.5&lon=-78.5", headers=headers)
+    return json.loads(conn.getresponse().read().decode("utf-8"))
 
-    res = conn.getresponse()
-    data = res.read()
 
-    json_object = json.loads(data.decode("utf-8"))
-    print(len(json_object['data'][0]))
-    json_formatted_str = json.dumps(json_object, indent=2)
-    print(json_formatted_str)
-
-    # print(pd.DataFrame.from_dict(json_object, orient='columns').T)
-    # print(pd.json_normalize(json_object))
+def conditions(df):
+    if (df['wind_gust_spd'] < 7
+            and df['wind_spd'] < 1
+            and df['precip'] < 1
+            and df['vis'] > 10):
+        return 1 # recommended = yes
+    else:
+        return 0 # recommended = no
 
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-     get_weather()
+     recommendGolfer()
 
