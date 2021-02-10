@@ -1,4 +1,3 @@
-import datetime
 import http
 import json
 import pandas as pd
@@ -13,25 +12,13 @@ def recommendGolfer():
     print(json_formatted_str)
     # select the columns required for the analysis
     df = pd.DataFrame.from_records(json_object['data']
-        , columns=['valid_date', 'wind_gust_spd', 'wind_spd', 'precip', 'uv', 'vis'])
-    # add a column to derive the recomendation based on the rule set in conditions method
+        , columns=['valid_date', 'wind_gust_spd', 'wind_spd', 'uv', 'vis', 'precip']
+        )
+    # # add a column to derive the recommendation based on the rule set in conditions method
     df['recommended'] = df.apply(conditions, axis=1)
-    # plot wind gusts graph
-    df.plot(x="valid_date", y=["wind_gust_spd"])
+    df.plot(x="valid_date", y=['wind_gust_spd', 'vis', 'precip'])
     plt.show()
-    # plot wind speed graph
-    df.plot(x="valid_date", y=["wind_spd"])
-    plt.show()
-    # plot uv index graph
-    df.plot(x="valid_date", y=["uv"])
-    plt.show()
-    # plot visibility graph
-    df.plot(x="valid_date", y=["vis"])
-    plt.show()
-    # plot precipitation graph
-    df.plot(x="valid_date", y=["precip"])
-    plt.show()
-    # plot recommendation graph
+
     plt.plot('valid_date', 'recommended', data=df, linestyle='none', marker='o')
     plt.show()
 
@@ -48,7 +35,6 @@ def getData():
 
 def conditions(df):
     if (df['wind_gust_spd'] < 7
-            and df['wind_spd'] < 1
             and df['precip'] < 1
             and df['vis'] > 10):
         return 1 # recommended = yes
